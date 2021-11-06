@@ -3,6 +3,7 @@ import logging
 import os
 import datetime
 import sys
+import atexit
 # third party
 import elasticsearch
 from elasticsearch.helpers import bulk
@@ -89,6 +90,7 @@ class ElasticHandler(logging.Handler):
                 }
             }'''
             es.indices.create(index=elastic_index, body=mapping)
+        atexit.register(self)    
         # commit the logs to elastic
         bulk(
             client=es,
