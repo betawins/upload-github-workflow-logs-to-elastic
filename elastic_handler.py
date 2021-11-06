@@ -3,7 +3,6 @@ import logging
 import os
 import datetime
 import sys
-
 # third party
 import elasticsearch
 from elasticsearch.helpers import bulk
@@ -43,16 +42,12 @@ except:
     print(f"Error: {output}")
     sys.exit(-1)
 
-try:
-    es = elasticsearch.Elasticsearch(
-        [ELASTIC_HOST],
-        api_key=(ELASTIC_API_KEY_ID, ELASTIC_API_KEY),
-        scheme="https"
-    )
-except elasticsearch.exceptions.AuthorizationException as exc:
-    output = "Authentication to elastic failed"
-    print(f"Error: {output}")
-    sys.exit(-1)
+
+es = elasticsearch.Elasticsearch(
+    [ELASTIC_HOST],
+    api_key=(ELASTIC_API_KEY_ID, ELASTIC_API_KEY),
+    scheme="https"
+)
 
 
 class ElasticHandler(logging.Handler):
@@ -90,7 +85,6 @@ class ElasticHandler(logging.Handler):
                 }
             }'''
             es.indices.create(index=elastic_index, body=mapping)
-         
         # commit the logs to elastic
         bulk(
             client=es,
