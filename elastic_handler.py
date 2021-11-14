@@ -42,12 +42,16 @@ except:
     print(f"Error: {output}")
     sys.exit(-1)
 
-
-es = elasticsearch.Elasticsearch(
-    [ELASTIC_HOST],
-    api_key=(ELASTIC_API_KEY_ID, ELASTIC_API_KEY),
-    scheme="https"
-)
+try:
+    es = elasticsearch.Elasticsearch(
+        [ELASTIC_HOST],
+        api_key=(ELASTIC_API_KEY_ID, ELASTIC_API_KEY),
+        scheme="https"
+    )
+except elasticsearch.exceptions.AuthorizationException as exc:
+    output = "Authentication to elastic failed"
+    print(f"Error: {output}")
+    sys.exit(-1)
 
 
 class ElasticHandler(logging.Handler):
@@ -70,7 +74,21 @@ class ElasticHandler(logging.Handler):
             print(f"::set-output name=result::{output}")
             return
 
-
+    def flush(self):
+        # if the index is not exist, create it with mapping:
+        if not es.indices.exists(index=elastic_index):
+            mapping = '''
+            {  
+              "mappings":{  
+                  "properties": {
+                    "@timestamp": {
+                      "type":   "date",
+                      "format": "epoch_millis"
+                    }
+                  }
+                }
+            }'''
+            es.indices.create(index=elastic_index, body=mapping)
         # commit the logs to elastic
         bulk(
             client=es,
